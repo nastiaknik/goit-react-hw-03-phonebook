@@ -26,7 +26,7 @@ export const ContactItem = ({ contacts, onDelete, onFavorite, favourites }) => {
         <NumberCeil>{contact.number}</NumberCeil>
         <ActionCeil>
           <Button type="button" onClick={() => onFavorite(contact)}>
-            {favourites.includes(contact) ? (
+            {favourites.some(fav => fav.id === contact.id) ? (
               <BsStarFill size={24} color="#ffd800" />
             ) : (
               <BsStar size={24} color="#ffd800" />
@@ -39,7 +39,7 @@ export const ContactItem = ({ contacts, onDelete, onFavorite, favourites }) => {
           <Button
             type="button"
             onClick={() => {
-              onDelete(contact.id);
+              onDelete(contact);
             }}
           >
             <RiDeleteBinLine size={24} color="red" />
@@ -60,5 +60,11 @@ ContactItem.propTypes = {
   ),
   onDelete: PropTypes.func.isRequired,
   onFavorite: PropTypes.func.isRequired,
-  favourites: PropTypes.array.isRequired,
+  favourites: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string.isRequired,
+      number: PropTypes.string.isRequired,
+      id: PropTypes.string.isRequired,
+    })
+  ),
 };

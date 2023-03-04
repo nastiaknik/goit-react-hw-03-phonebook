@@ -1,5 +1,6 @@
 import { Component } from 'react';
-import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { Layout } from 'components/Layout/Layout';
 import { Section } from 'components/Section/Section';
 import { ContactForm } from './ContactForm/ContactForm';
@@ -8,15 +9,30 @@ import { ContactFilter } from './ContactFilter/ContactFilter';
 
 export class App extends Component {
   state = {
-    contacts: [
-      { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
-      { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
-      { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
-      { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
+    contacts: [],
     filter: '',
     favourites: [],
   };
+
+  componentDidMount() {
+    const parsedContacts = JSON.parse(localStorage.getItem('contacts'));
+    if (parsedContacts) {
+      this.setState({ contacts: parsedContacts });
+    }
+    const savedFavourites = JSON.parse(localStorage.getItem('favourites'));
+    if (savedFavourites) {
+      this.setState({ favourites: savedFavourites });
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.state.contacts !== prevState.contacts) {
+      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+    }
+    if (this.state.favourites !== prevState.favourites) {
+      localStorage.setItem('favourites', JSON.stringify(this.state.favourites));
+    }
+  }
 
   addContact = contact => {
     if (
@@ -24,7 +40,12 @@ export class App extends Component {
         return item.name === contact.name;
       })
     ) {
-      Notify.warning('Contact with this name already exist!');
+      toast.warning(
+        <p>
+          Contact <span style={{ color: 'orange' }}>{contact.name}</span>{' '}
+          already exist!
+        </p>
+      );
       return;
     }
     if (
@@ -32,34 +53,60 @@ export class App extends Component {
         return item.number === contact.number;
       })
     ) {
-      Notify.warning('This number is already in base!');
+      toast.warning(
+        <p>
+          Number <span style={{ color: 'orange' }}>{contact.number}</span> is
+          already in base!
+        </p>
+      );
       return;
     }
     this.setState(({ contacts }) => ({
       contacts: [...contacts, contact],
     }));
-    Notify.success('Contact added!');
+    toast.success(
+      <p>
+        Contact <span style={{ color: 'green' }}>{contact.name}</span> added!
+      </p>
+    );
   };
 
-  deleteContact = contactId => {
+  deleteContact = contact => {
     this.setState(({ contacts }) => ({
-      contacts: contacts.filter(({ id }) => id !== contactId),
+      contacts: contacts.filter(({ id }) => id !== contact.id),
     }));
-    Notify.success('Contact deleted!');
+    toast.success(
+      <p>
+        Contact <span style={{ color: 'green' }}>{contact.name}</span> deleted!
+      </p>
+    );
   };
 
   addContactToFav = contact => {
-    if (this.state.favourites.includes(contact)) {
+    if (this.state.favourites.some(fav => fav.id === contact.id)) {
       this.setState(({ favourites }) => ({
         favourites: favourites.filter(({ id }) => id !== contact.id),
       }));
-      Notify.success('Contact removed from favourites!');
+      toast.success(
+        <p>
+          Contact <span style={{ color: 'green' }}>{contact.name}</span> removed
+          from favourites!
+        </p>
+      );
       return;
     }
     this.setState(({ favourites }) => ({
-      favourites: [...favourites, contact],
+      favourites: [
+        ...favourites.filter(({ id }) => id !== contact.id),
+        contact,
+      ],
     }));
-    Notify.success('Contact added to favourites!');
+    toast.success(
+      <p>
+        Contact <span style={{ color: 'green' }}>{contact.name}</span> added to
+        favourites!
+      </p>
+    );
   };
 
   handleSetFilterValue = ({ target: { name, value } }) => {
@@ -79,8 +126,8 @@ export class App extends Component {
         );
       }).length === 0
     ) {
-      Notify.failure('Sorry, there are no contact matching your search. :(', {
-        showOnlyTheLastOne: true,
+      toast.error('Sorry, there are no contact matching your search :(', {
+        toastId: 'dont-duplicate-pls',
       });
     }
 
@@ -118,6 +165,7 @@ export class App extends Component {
             />
           </Section>
         )}
+        <ToastContainer newestOnTop={true} limit={5} autoClose={3000} />
       </Layout>
     );
   }
